@@ -12,8 +12,34 @@ type Query {
     rollThreeDice: [Int]
 
     rollDice(numDice: Int!, numSides: Int): [Int]
+
+    getDie(numSides: Int): RandomDie
+}
+
+type RandomDie {
+    numSides: Int!
+    rollOnce: Int!
+    roll(numRolls: Int!): [Int]
 }
 `);
+
+class RandomDie {
+    constructor(numSides) {
+        this.numSides = numSides;
+    }
+
+    rollOnce() {
+        return 1 + Math.floor(Math.random() * this.numSides);
+    }
+
+    roll({ numRolls }) {
+        var output = [];
+        for (var i = 0; i < numRolls; i++) {
+            output.push(this.rollOnce());
+        }
+        return output;
+    }
+}
 
 //  The root will provider resolver functions for each API endpoint
 var root = {
@@ -42,6 +68,10 @@ var root = {
             output.push(1 + Math.floor(Math.random() * (numSides || 6)));
         }
         return output;
+    },
+
+    getDie: function({ numSides }) {
+        return new RandomDie(numSides || 6);
     }
 };
 
