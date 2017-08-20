@@ -11,16 +11,13 @@ input MessageInput {
 
 type Query {
     hello: String,
-
     quoteOfTheDay: String
     random: Float!
     rollThreeDice: [Int]
-
     rollDice(numDice: Int!, numSides: Int): [Int]
-
     getDie(numSides: Int): RandomDie
-
     getMessage(id: ID!): Message
+    ip: String
 }
 
 type RandomDie {
@@ -40,6 +37,11 @@ type Mutation {
     updateMessage(id: ID!, input: MessageInput): Message
 }
 `);
+
+function loggingMiddleware(req, res, next) {
+    console.log('ip:', req.ip);
+    next();
+}
 
 class RandomDie {
     constructor(numSides) {
@@ -87,7 +89,6 @@ var root = {
         return [1, 2, 3].map(_ => 1 + Math.floor(Math.random() * 6));
     },
 
-
     // Sample call while passing parameters
     //  { rollDice(numDice: 3, numSides: 8) }
     rollDice: function({ numDice, numSides }) {
@@ -123,6 +124,10 @@ var root = {
         }
         fakeDatabase[id] = input;
         return new Message(id, input);
+    },
+
+    ip: function(args, request) {
+        return request.ip;
     }
 };
 
