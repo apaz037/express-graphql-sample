@@ -4,6 +4,11 @@ var { buildSchema } = require('graphql');
 
 //  Let's make a schema
 var schema = buildSchema(`
+input MessageInput {
+    content: String
+    author: String
+}
+
 type Query {
     hello: String,
 
@@ -14,12 +19,25 @@ type Query {
     rollDice(numDice: Int!, numSides: Int): [Int]
 
     getDie(numSides: Int): RandomDie
+
+    getMessage(id: ID!): Message
 }
 
 type RandomDie {
     numSides: Int!
     rollOnce: Int!
     roll(numRolls: Int!): [Int]
+}
+
+type Message {
+    id: ID!
+    content: String
+    author: String
+}
+
+type Mutation {
+    createMessage(input: MessageInput): Message
+    updateMessage(id: ID!, input: MessageInput): Message
 }
 `);
 
@@ -40,6 +58,16 @@ class RandomDie {
         return output;
     }
 }
+
+class Message {
+    constructor(id, { content, author }) {
+        this.id = id;
+        this.content = content;
+        this.author = author;
+    }
+}
+
+var fakeDatabase = {};
 
 //  The root will provider resolver functions for each API endpoint
 var root = {
@@ -72,6 +100,29 @@ var root = {
 
     getDie: function({ numSides }) {
         return new RandomDie(numSides || 6);
+    },
+
+    getMessage: function({ id }) {
+        if (!fakeDatabase[id]) {
+            throw new Error('no message exists with id ' + id);
+        }
+        return new Message(id, fakeDatabase[id]);
+    },
+
+    createMessage: function({ input }) {
+        //  Create a random ID for the fakeDatabase
+        var id = require('crypto').randomBytes(10).toString('hex');
+
+        fakeDatabase[id] = input;
+        return new Message(id, input);
+    },
+
+    updateMessage: function({ id, input }) {
+        if (!fakeDatabase[id]) {
+            throw new Error('no message exists with id ' + id);
+        }
+        fakeDatabase[id] = input;
+        return new Message(id, input);
     }
 };
 
